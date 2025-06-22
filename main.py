@@ -17,15 +17,15 @@ def read_chunks(path):
             return
 
         while True:
-            #Length and name
+            #Dlugosc i nazwa
             chunk_length = f.read(4)
             chunk_name = f.read(4)
-            #print(chunk_name)
+
             if chunk_name == b'IEND':
                 print("\nReached end of file")
                 break
 
-            #Data
+            #Dane
             length_decimal = struct.unpack(">I", chunk_length)[0]
             data = f.read(length_decimal)
 
@@ -42,23 +42,21 @@ def read_chunks(path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="PNG EXIF tool with spectrum and anonymization")
-    parser.add_argument('file', help="Path to PNG file")
-    parser.add_argument('--spectrum', action='store_true', help="Show Fourier spectrum of image")
-    parser.add_argument('--strip', metavar='OUT', help="Output path for anonymized PNG")
-    parser.add_argument('--hide', metavar='DATA', help="Raw data to append after IEND chunk")
+    parser = argparse.ArgumentParser(description="Program do analizy plików PNG")
+    parser.add_argument('file', help="Ścieżka do pliku PNG")
+    parser.add_argument('--spectrum', action='store_true', help="Pokazanie widm obrazu")
+    parser.add_argument('--strip', metavar='OUT', help="Pozbycie się niekrytycznych czunków PNG, zapis do OUT")
+    parser.add_argument('--hide', metavar='DATA', help="Dane do schowania za IEND")
     args = parser.parse_args()
 
     file_path = args.file
     img = Image.open(file_path)
     img.show()
-    # Show chunk data
+
     read_chunks(file_path)
 
-    # Spectrum
     if args.spectrum:
         plot_image_spectrum(file_path)
-
 
     if args.strip:
         if args.hide:
@@ -69,7 +67,7 @@ def main():
         else:
             strip_ancillary_chunks(file_path, args.strip)
             print(f"Anonymized PNG written to {args.strip}")
-            read_chunks(args.anon)
+            read_chunks(args.strip)
 
 if __name__ == '__main__':
     main()
