@@ -1,16 +1,15 @@
+import argparse
 import os
 import struct
 
-class PNGchunk:
-    def __init__(self, name, characteristics):
-        self.name = name
-        self.characteristics = characteristics
 
-    def __str__(self):
-        return f"{self.name}: {self.characteristics}"
+from fourier import plot_image_spectrum
+from show_properties import show_chunk_properties
+from strip import strip_ancillary_chunks
+from PIL import Image
 
-def read_critical_chunks(path):
-    chunks = []
+def read_chunks(path):
+    idat_data = b''
     with (open(path, 'rb') as f):
         header = f.read(8)
         if header != b'\x89PNG\r\n\x1A\n':
@@ -18,59 +17,61 @@ def read_critical_chunks(path):
             return
 
         while True:
-            #checking Length and Chunk type
+            #Length and name
             chunk_length = f.read(4)
             chunk_name = f.read(4)
+            #print(chunk_name)
+            if chunk_name == b'IEND':
+                print("\nReached end of file")
+                break
 
-            if len(chunk_length) < 4:
-                return chunks
-
-            if len(chunk_name) < 4:
-                return chunks
-
+            #Data
             length_decimal = struct.unpack(">I", chunk_length)[0]
+            data = f.read(length_decimal)
 
-            #parsing Chunk data according to type of chunk
+            if chunk_name == b'IDAT':
+                idat_data += data
+            else:
+                show_chunk_properties(chunk_name, data)
 
-            if chunk_name == b'IHDR':
-                chunks.append(parse_IHDR(f.read(length_decimal)))
-
-            if chunk_name == b'PLTE':
-                if length_decimal % 3 != 0:
-                    print("Invalid PLTE chunk")
-                    break
-                chunks.append(parse_PLTE(f.read(length_decimal)))
-
-            #CRC - going to the next chunk
+            #CRC
             f.read(4)
 
-        return chunks
-
-def parse_IHDR(data):
-    characteristics = []
-    for chunk_data in struct.unpack(">IIBBBBB", data):
-        characteristics.append(chunk_data)
-
-    return PNGchunk("IHDR", characteristics)
-
-def parse_PLTE(data):
-    num_colors = len(data) // 3
-    string_format = f'{num_colors * 3}B'
-    rgb_val = struct.unpack(string_format, data)
-    palette = []
-
-    for i in range(0, len(rgb_val), 3):
-        palette.append(tuple(rgb_val[i : i + 3]))
-
-    return PNGchunk("PLTE", palette)
+        if idat_data:
+            show_chunk_properties(b'IDAT', idat_data)
 
 
-if __name__ == "__main__":
-    cwd = os.getcwd()
-    file_path = os.path.join(cwd, 'test_file.png')
-    file = open(file_path, "rb")
+def main():
+    parser = argparse.ArgumentParser(description="PNG EXIF tool with spectrum and anonymization")
+    parser.add_argument('file', help="Path to PNG file")
+    parser.add_argument('--spectrum', action='store_true', help="Show Fourier spectrum of image")
+    parser.add_argument('--strip', metavar='OUT', help="Output path for anonymized PNG")
+    parser.add_argument('--hide', metavar='DATA', help="Raw data to append after IEND chunk")
+    args = parser.parse_args()
+
+    file_path = args.file
+    img = Image.open(file_path)
+    img.show()
+    # Show chunk data
+    read_chunks(file_path)
+
+    # Spectrum
+    if args.spectrum:
+        plot_image_spectrum(file_path)
 
 
-    listOfChunks = read_critical_chunks(file_path)
-    for chunk in listOfChunks:
-        print(chunk)
+    if args.strip:
+        if args.hide:
+            hidden_data = args.hide.encode()
+            strip_ancillary_chunks(file_path, args.strip, hidden_data = hidden_data)
+            print(f"Anonymized PNG written to {args.strip}")
+            read_chunks(args.strip)
+        else:
+            strip_ancillary_chunks(file_path, args.strip)
+            print(f"Anonymized PNG written to {args.strip}")
+            read_chunks(args.anon)
+
+if __name__ == '__main__':
+    main()
+
+
