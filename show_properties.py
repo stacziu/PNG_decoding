@@ -207,5 +207,5 @@ def show_pHYs(data):
         return
     else:
         ppux, ppuy, unit = struct.unpack(">IIB", data)
-        unit_str = "piksel/meter" if unit == 1 else "brak"
-        print(f"\nDPI: {ppux}x{ppuy}, Jednostka: {unit_str}")
+        unit_str = "piksel/metr" if unit == 1 else "brak"
+        print(f"\nDPI: {ppux}x{ppuy} ({int(ppux/39.3701)}), Jednostka: {unit_str}")

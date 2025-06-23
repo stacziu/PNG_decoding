@@ -12,7 +12,7 @@ def plot_image_spectrum(image_path):
     fourier_shifted = np.fft.fftshift(fourier)
 
     #Widmo amplitudowe
-    mag = 20 * np.log10(np.abs(fourier_shifted))
+    magnitude = 20 * np.log10(np.abs(fourier_shifted))
     # Faza (kąt) i mapowanie do zakresu 0-255
     phase = np.angle(fourier_shifted)
     fourier_phase = np.asarray((phase + np.pi) / (2 * np.pi) * 255)
@@ -29,7 +29,7 @@ def plot_image_spectrum(image_path):
     plt.axis('off')
 
     plt.subplot(1, 3, 2)
-    plt.imshow(mag, cmap='gray')
+    plt.imshow(magnitude, cmap='gray')
     plt.title('Widmo amplitudowe')
     plt.axis('off')
 
