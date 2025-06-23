@@ -1,5 +1,4 @@
 import argparse
-import os
 import struct
 
 
@@ -62,11 +61,11 @@ def main():
         if args.hide:
             hidden_data = args.hide.encode()
             strip_ancillary_chunks(file_path, args.strip, hidden_data = hidden_data)
-            print(f"Anonymized PNG written to {args.strip}")
+            print(f"Zanonimizowany PNG zapisano jako: {args.strip}")
             read_chunks(args.strip)
         else:
             strip_ancillary_chunks(file_path, args.strip)
-            print(f"Anonymized PNG written to {args.strip}")
+            print(f"Zanonimizowany PNG zapisano jako: {args.strip}")
             read_chunks(args.strip)
 
 if __name__ == '__main__':
